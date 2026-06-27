@@ -420,25 +420,25 @@ def _paper_analysis_from_firestore(doc_id: str, user_id: Optional[str]) -> Optio
 
 @app.post("/api/chat/beginner", response_model=TextResponse)
 def chat_beginner(request: ChatRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     return TextResponse(text=generate_chat_response(context, request.message, "beginner"))
 
 
 @app.post("/api/chat/technical", response_model=TextResponse)
 def chat_technical(request: ChatRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     return TextResponse(text=generate_chat_response(context, request.message, "technical"))
 
 
 @app.post("/api/chat/freeform", response_model=TextResponse)
 def chat_freeform(request: ChatRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     return TextResponse(text=generate_chat_response(context, request.message, "freeform"))
 
 
 @app.post("/api/flashcards/generate", response_model=FlashcardResponse)
 def flashcards_generate(request: DocumentRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     json_response = generate_flashcards(context)
     if json_response.startswith("Error"):
         raise HTTPException(status_code=500, detail=json_response)
@@ -453,13 +453,13 @@ def flashcards_generate(request: DocumentRequest):
 
 @app.post("/api/podcast/generate", response_model=TextResponse)
 def podcast_generate(request: DocumentRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     return TextResponse(text=generate_podcast_script(context))
 
 
 @app.post("/api/summary/generate", response_model=TextResponse)
 def summary_generate(request: DocumentRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     return TextResponse(text=generate_summary(context))
 
 
@@ -470,7 +470,7 @@ def text_simplify(request: SimplifyRequest):
 
 @app.post("/api/quiz/generate", response_model=QuizResponse)
 def quiz_generate(request: DocumentRequest):
-    context = get_document_context(request.doc_id, request.user_id)
+    context = request.context if request.context else get_document_context(request.doc_id, request.user_id)
     json_response = generate_quiz_questions(context)
     if json_response.startswith("Error"):
         raise HTTPException(status_code=500, detail=json_response)

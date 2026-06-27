@@ -1,19 +1,40 @@
 # Scholar Mind Backend
 
-This backend powers the AI features for the Scholar Mind app. It is built with FastAPI and supports PDF analysis, chat modes, summaries, quizzes, peer review, references, and OpenAlex paper search.
+FastAPI backend for the Scholar Mind app. It powers PDF analysis, AI chat, summaries, quizzes, flashcards, peer review, reference generation, exports, and OpenAlex research paper search.
 
-## What This Backend Does
+## Deployment Status
 
-- Accepts PDF uploads and extracts text
-- Analyzes papers with AI
-- Stores temporary document context in memory
-- Supports beginner, technical, and freeform chat
-- Generates flashcards, quizzes, summaries, and podcast scripts
-- Searches research papers using OpenAlex
-- Generates peer review feedback and formatted references
-- Exports references as DOCX or PDF
+This backend has been deployed on Vercel.
 
-## Project Files
+- Production API: `https://your-vercel-deployment-url.vercel.app`
+- API docs: `https://your-vercel-deployment-url.vercel.app/docs`
+- Health check: `https://your-vercel-deployment-url.vercel.app/`
+
+Replace the placeholder URL above with the actual Vercel production URL for this project.
+
+Expected health check response:
+
+```json
+{
+  "message": "Welcome to Scholar Mind AI Backend"
+}
+```
+
+## Features
+
+- PDF upload and text extraction
+- AI-powered paper analysis
+- Temporary in-memory document context
+- Beginner, technical, and freeform chat modes
+- Flashcard, quiz, summary, and podcast script generation
+- Text simplification
+- OpenAlex paper search and trending papers
+- Paper insights
+- Peer review analysis
+- Reference generation
+- DOCX and PDF reference exports
+
+## Project Structure
 
 ```text
 scholar_mind_backend/
@@ -27,101 +48,127 @@ scholar_mind_backend/
 `-- README.md
 ```
 
-## Before You Start
-
-Make sure you have:
+## Requirements
 
 - Python 3.10 or newer
 - `pip`
-- A DeepSeek-compatible API key placed in `DEEPSEEK_API_KEY`
+- DeepSeek-compatible API key
+- Optional OpenAlex API key
 
-Optional:
-
-- `OPENALEX_API_KEY` for OpenAlex requests
-
-## Step-By-Step Setup
-
-### Step 1: Open the backend folder
-
-```powershell
-cd scholar_mind_backend
-```
-
-### Step 2: Create a virtual environment
-
-```powershell
-python -m venv .venv
-```
-
-### Step 3: Activate the virtual environment
-
-```powershell
-.venv\Scripts\Activate
-```
-
-### Step 4: Install dependencies
-
-```powershell
-pip install -r requirements.txt
-```
-
-### Step 5: Create your `.env` file
-
-Create a file named `.env` in this folder and add:
+Environment variables:
 
 ```env
 DEEPSEEK_API_KEY=your_api_key_here
 OPENALEX_API_KEY=optional_key_here
 ```
 
-## Run Locally
+For local development, place these in a `.env` file. For production, add them in the Vercel project settings.
 
-### Step 6: Start the FastAPI server
+## Local Setup
+
+Open the backend folder:
+
+```powershell
+cd scholar_mind_backend
+```
+
+Create and activate a virtual environment:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate
+```
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Create a `.env` file:
+
+```env
+DEEPSEEK_API_KEY=your_api_key_here
+OPENALEX_API_KEY=optional_key_here
+```
+
+Run the local FastAPI server:
 
 ```powershell
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Step 7: Open the API docs
-
-Use this in your browser:
+Open the local API docs:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-If it opens, your backend is working.
+## Vercel Deployment
 
-## Quick First Test
-
-### Step 1: Check the root route
-
-Open:
-
-```text
-http://127.0.0.1:8000/
-```
-
-Expected response:
+The project is configured for Vercel with [vercel.json](vercel.json).
 
 ```json
 {
-  "message": "Welcome to Scholar Mind AI Backend"
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "main.py"
+    }
+  ]
 }
 ```
 
-### Step 2: Try the Swagger UI
+### Deploy From The CLI
 
-- Open `/docs`
-- Expand an endpoint like `/api/pdf/analyze`
-- Upload a PDF
-- Run the request
+Install the Vercel CLI:
+
+```powershell
+npm i -g vercel
+```
+
+Log in:
+
+```powershell
+vercel login
+```
+
+Deploy from the backend folder:
+
+```powershell
+vercel
+```
+
+Deploy to production:
+
+```powershell
+vercel --prod
+```
+
+### Production Environment Variables
+
+Add these variables in the Vercel dashboard under Project Settings > Environment Variables:
+
+- `DEEPSEEK_API_KEY`
+- `OPENALEX_API_KEY` if you use authenticated OpenAlex requests
+
+After adding or changing environment variables, redeploy the project.
 
 ## Main Endpoints
 
+### Health
+
+- `GET /` - backend health check
+
 ### Paper Processing
 
-- `GET /` - health check
 - `POST /api/pdf/extract` - extract text from a PDF
 - `POST /api/pdf/analyze` - analyze a PDF and return structured results
 - `GET /api/pdf/analysis/{doc_id}` - fetch saved analysis
@@ -153,136 +200,86 @@ Expected response:
 
 ## How The Backend Works
 
-### 1. Upload
+1. The client uploads a PDF.
+2. [pdf.py](pdf.py) extracts the document text.
+3. [ai.py](ai.py) sends the text to the AI layer for structured paper analysis.
+4. [main.py](main.py) repairs malformed AI JSON when needed.
+5. If parsing still fails, the backend returns fallback analysis data.
+6. The stored paper context is reused for chat, quizzes, summaries, flashcards, peer review, and references.
 
-The client uploads a PDF to the backend.
+## Testing
 
-### 2. Extraction
-
-`pdf.py` extracts text from the file.
-
-### 3. AI Analysis
-
-`ai.py` sends the text to the AI layer and asks for structured paper analysis.
-
-### 4. JSON Repair
-
-If the AI returns malformed JSON, `main.py` tries to repair and parse it.
-
-### 5. Fallback Handling
-
-If parsing still fails, the backend creates a fallback analysis so the app still gets usable output.
-
-### 6. Extra Features
-
-That same stored paper context is reused for chat, quiz generation, summaries, flashcards, and references.
-
-## Deploy To Vercel
-
-This project already includes [vercel.json](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/vercel.json:1).
-
-### Step 1: Install Vercel CLI
+Run the endpoint test script after starting the local server:
 
 ```powershell
-npm i -g vercel
+python test_endpoints.py
 ```
 
-### Step 2: Login
+For the deployed backend, open:
 
-```powershell
-vercel login
+```text
+https://your-vercel-deployment-url.vercel.app/docs
 ```
 
-### Step 3: Deploy
+Then test endpoints directly from Swagger UI.
 
-Run this inside `scholar_mind_backend`:
+## Important Notes
 
-```powershell
-vercel
-```
-
-### Step 4: Add environment variables in Vercel
-
-Add these in the Vercel dashboard:
-
-- `DEEPSEEK_API_KEY`
-- `OPENALEX_API_KEY` if needed
-
-### Step 5: Redeploy if required
-
-```powershell
-vercel --prod
-```
-
-## Notes About Current Behavior
-
-- CORS is fully open right now with `allow_origins=["*"]`
-- Documents and analyses are stored in memory, so local cache is lost when the server restarts
-- Some analysis fallback data can also be rebuilt from Firestore if `user_id` is available
-- PDF and DOCX are supported for peer review and reference generation
+- CORS is currently open with `allow_origins=["*"]`.
+- Document analysis context is stored in memory, so it can be lost when the server restarts or a serverless function instance changes.
+- Vercel deployments are serverless, so avoid relying on long-lived local memory for permanent data.
+- Some fallback analysis data can be rebuilt from Firestore if `user_id` is available.
+- PDF and DOCX files are supported for peer review and reference generation.
 
 ## Troubleshooting
 
-### Problem: Server does not start
+### Local server does not start
 
 Check that:
 
-- your virtual environment is activated
+- the virtual environment is activated
 - dependencies are installed
 - `uvicorn` is available
+- required environment variables are present
 
-### Problem: AI requests fail
-
-Check that:
-
-- `.env` exists
-- `DEEPSEEK_API_KEY` is valid
-- your machine has internet access
-
-### Problem: OpenAlex search fails
+### AI requests fail
 
 Check that:
 
-- internet access is working
+- `DEEPSEEK_API_KEY` is set locally or in Vercel
+- the key is valid
+- the deployment has been redeployed after adding environment variables
+
+### OpenAlex search fails
+
+Check that:
+
 - the API is reachable
-- your optional `OPENALEX_API_KEY` is correct if you are using one
+- internet access is working
+- `OPENALEX_API_KEY` is correct if you are using one
 
-### Problem: PDF upload fails
+### PDF upload fails
 
 Check that:
 
-- the uploaded file is really a `.pdf`
+- the uploaded file is a valid `.pdf`
 - the file is not corrupted
+- the request is sent as multipart form data
 
-### Problem: Vercel deployment works but requests fail
+### Vercel deployment works but API requests fail
 
 Check that:
 
-- environment variables were added in Vercel
-- the deployed project points to `main.py`
-- the route config in `vercel.json` is unchanged
-
-## Simple Run Checklist
-
-- [ ] Create `.venv`
-- [ ] Activate `.venv`
-- [ ] Install `requirements.txt`
-- [ ] Add `.env`
-- [ ] Run `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
-- [ ] Open `http://127.0.0.1:8000/docs`
+- `DEEPSEEK_API_KEY` is configured in Vercel
+- the latest production deployment is active
+- [vercel.json](vercel.json) still points all routes to `main.py`
+- the frontend is calling the production Vercel URL, not `localhost`
 
 ## Useful Files
 
-- [main.py](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/main.py:1) - FastAPI app and routes
-- [ai.py](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/ai.py:1) - AI generation logic
-- [models.py](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/models.py:1) - request and response models
-- [pdf.py](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/pdf.py:1) - PDF and DOCX extraction helpers
-- [test_endpoints.py](C:/Users/SNAKE/Desktop/mob%20app/scholarai/scholar_mind_backend/test_endpoints.py:1) - endpoint test script
-
-## Final Note
-
-If you want, I can also turn this into:
-
-1. a more professional GitHub-style README
-2. a beginner-friendly README with screenshots sections
-3. a very short deployment-only README
+- [main.py](main.py) - FastAPI app and routes
+- [ai.py](ai.py) - AI generation logic
+- [models.py](models.py) - request and response models
+- [pdf.py](pdf.py) - PDF and DOCX extraction helpers
+- [test_endpoints.py](test_endpoints.py) - endpoint test script
+- [vercel.json](vercel.json) - Vercel deployment configuration
