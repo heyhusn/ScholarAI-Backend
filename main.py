@@ -2,6 +2,7 @@ import io
 import json
 import os
 import re
+import ssl
 import urllib.parse
 import urllib.request
 import uuid
@@ -276,16 +277,43 @@ def get_firebase_project_id() -> str:
     return "scholarapp-43ed5"
 
 
+def get_firebase_api_key() -> str:
+    paths = [
+        "c:/Users/SNAKE/AndroidStudioProjects/ScholarApp/app/google-services.json",
+        "C:/Users/SNAKE/AndroidStudioProjects/ScholarApp/app/google-services.json",
+        "C:/Users/SNAKE/Desktop/mob app/scholarai/google-services.json",
+        "../google-services.json",
+        "google-services.json"
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    clients = data.get("client", [])
+                    if clients:
+                        api_keys = clients[0].get("api_key", [])
+                        if api_keys:
+                            key = api_keys[0].get("current_key")
+                            if key:
+                                return key
+            except Exception:
+                pass
+    return "AIzaSyCcw6_NTYWxFSJFFFMxfdDaa71uLfhzjmA"
+
+
 def get_document_context(doc_id: str, user_id: Optional[str] = None) -> str:
     if doc_id in DOCUMENTS:
         return DOCUMENTS[doc_id]
 
     if user_id:
         project_id = get_firebase_project_id()
-        url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/users/{user_id}/papers/{doc_id}"
+        api_key = get_firebase_api_key()
+        url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/users/{user_id}/papers/{doc_id}?key={api_key}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=5) as response:
+            ssl_ctx = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as response:
                 data = json.loads(response.read().decode())
 
             fields = data.get("fields", {})
@@ -359,10 +387,12 @@ def _paper_analysis_from_firestore(doc_id: str, user_id: Optional[str]) -> Optio
         return None
 
     project_id = get_firebase_project_id()
-    url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/users/{user_id}/papers/{doc_id}"
+    api_key = get_firebase_api_key()
+    url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/users/{user_id}/papers/{doc_id}?key={api_key}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        ssl_ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, timeout=5, context=ssl_ctx) as response:
             data = json.loads(response.read().decode())
 
         fields = data.get("fields", {})
