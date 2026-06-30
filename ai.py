@@ -17,7 +17,7 @@ client = OpenAI(
 MODEL_NAME = "deepseek-chat"
 
 
-def _call_ai(system_prompt: str, user_prompt: str) -> str:
+def _call_ai(system_prompt: str, user_prompt: str, timeout_seconds: float = 30.0) -> str:
     """Shared helper to call the AI model with timeout and retry logic."""
     if not DEEPSEEK_API_KEY or DEEPSEEK_API_KEY == "your_deepseek_api_key_here":
         return "Error: DeepSeek API key is not configured in .env file."
@@ -31,7 +31,7 @@ def _call_ai(system_prompt: str, user_prompt: str) -> str:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                timeout=15.0,
+                timeout=timeout_seconds,
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -220,8 +220,8 @@ Rules:
 - Do not add markdown code fences like ```json.
 - Return ONLY the raw JSON array.
 """
-    truncated_text = text[:8000]
-    return _call_ai(system_prompt, f"Paper text:\n{truncated_text}")
+    truncated_text = text[:6000]
+    return _call_ai(system_prompt, f"Paper text:\n{truncated_text}", timeout_seconds=45.0)
 
 
 
