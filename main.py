@@ -45,7 +45,7 @@ from models import (
     ReferencesResponse,
     ExportReferencesRequest,
 )
-from pdf import extract_text_from_pdf, extract_text_from_docx
+from pdf import extract_text_from_pdf, extract_text_from_docx, extract_text_from_doc
 
 app = FastAPI(title="Scholar Mind Backend", description="Backend for Scholar Mind AI features")
 
@@ -910,12 +910,15 @@ def get_paper_insights(request: PaperInsightsRequest):
 async def analyze_peer_review_endpoint(file: UploadFile = File(...)):
     filename = file.filename.lower()
     
-    if not (filename.endswith(".pdf") or filename.endswith(".docx")):
-        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported.")
+    if not (filename.endswith(".pdf") or filename.endswith(".docx") or filename.endswith(".doc")):
+        raise HTTPException(status_code=400, detail="Only PDF, DOCX, and DOC files are supported.")
         
     try:
         if filename.endswith(".pdf"):
             text = await extract_text_from_pdf(file)
+        elif filename.endswith(".doc"):
+            file_bytes = await file.read()
+            text = extract_text_from_doc(file_bytes)
         else:
             file_bytes = await file.read()
             text = extract_text_from_docx(file_bytes)
@@ -967,12 +970,15 @@ async def analyze_peer_review_endpoint(file: UploadFile = File(...)):
 async def generate_references_endpoint(file: UploadFile = File(...), style: str = Form("APA")):
     filename = file.filename.lower()
     
-    if not (filename.endswith(".pdf") or filename.endswith(".docx")):
-        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported.")
+    if not (filename.endswith(".pdf") or filename.endswith(".docx") or filename.endswith(".doc")):
+        raise HTTPException(status_code=400, detail="Only PDF, DOCX, and DOC files are supported.")
         
     try:
         if filename.endswith(".pdf"):
             text = await extract_text_from_pdf(file)
+        elif filename.endswith(".doc"):
+            file_bytes = await file.read()
+            text = extract_text_from_doc(file_bytes)
         else:
             file_bytes = await file.read()
             text = extract_text_from_docx(file_bytes)
